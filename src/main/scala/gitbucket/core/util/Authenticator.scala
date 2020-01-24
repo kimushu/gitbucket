@@ -24,6 +24,31 @@ trait OneselfAuthenticator { self: ControllerBase =>
 }
 
 /**
+ * Allows only oneself and administrators when secret mode.
+ */
+trait SecretOneselfAuthenticator { self: ControllerBase with AccountService =>
+  protected def secretOneselfOnly(action: => Any) = { authenticate(action) }
+  protected def secretOneselfOnly[T](action: T => Any) = (form: T) => { authenticate(action(form)) }
+
+  private def authenticate(action: => Any) = {
+    context.loginAccount match {
+      case Some(x) if (x.isAdmin)                      => action
+      case Some(x) if (request.paths(0) == x.userName) => action
+      case Some(x) if (getAccountByUserName(request.paths(0)) match {
+            case Some(y) if (y.isGroupAccount) =>
+              getGroupMembers(y.userName).exists { m =>
+                m.userName == x.userName
+              }
+            case _ => false
+          }) =>
+        action
+      case Some(x) if (!context.settings.secretMode) => action
+      case _                                         => Unauthorized()
+    }
+  }
+}
+
+/**
  * Allows only the repository owner and administrators.
  */
 trait OwnerAuthenticator { self: ControllerBase with RepositoryService with AccountService =>

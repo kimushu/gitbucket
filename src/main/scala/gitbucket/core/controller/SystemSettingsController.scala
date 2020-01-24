@@ -91,6 +91,7 @@ trait SystemSettingsControllerBase extends AccountManagementControllerBase {
     ),
     "skinName" -> trim(label("AdminLTE skin name", text(required))),
     "showMailAddress" -> trim(label("Show mail address", boolean())),
+    "secretMode" -> trim(label("Secret mode", boolean())),
     "webhook" -> mapping(
       "blockPrivateAddress" -> trim(label("Block private address", boolean())),
       "whitelist" -> trim(label("Whitelist", multiLineText()))
@@ -102,6 +103,9 @@ trait SystemSettingsControllerBase extends AccountManagementControllerBase {
       } else None,
       if (settings.ssh.enabled && settings.ssh.sshHost.isEmpty) {
         Some("sshHost" -> "SSH host is required if SSH access is enabled.")
+      } else None,
+      if (settings.secretMode && settings.allowAccountRegistration) {
+        Some("allowAccountRegistration" -> "Required to select \"Deny\" if secret mode is enabled.")
       } else None
     ).flatten
   }

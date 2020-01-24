@@ -27,6 +27,7 @@ class AccountController
     with SshKeyService
     with GpgKeyService
     with OneselfAuthenticator
+    with SecretOneselfAuthenticator
     with UsersAuthenticator
     with GroupManagerAuthenticator
     with ReadableUsersAuthenticator
@@ -44,6 +45,7 @@ trait AccountControllerBase extends AccountManagementControllerBase {
     with SshKeyService
     with GpgKeyService
     with OneselfAuthenticator
+    with SecretOneselfAuthenticator
     with UsersAuthenticator
     with GroupManagerAuthenticator
     with ReadableUsersAuthenticator
@@ -234,59 +236,63 @@ trait AccountControllerBase extends AccountManagementControllerBase {
   /**
    * Displays user information.
    */
-  get("/:userName") {
+  get("/:userName")(secretOneselfOnly {
     val userName = params("userName")
-    getAccountByUserName(userName).map { account =>
-      val extraMailAddresses = getAccountExtraMailAddresses(userName)
-      params.getOrElse("tab", "repositories") match {
-        // Public Activity
-        case "activity" =>
-          gitbucket.core.account.html.activity(
-            account,
-            if (account.isGroupAccount) Nil else getGroupsByUserName(userName),
-            getActivitiesByUser(userName, true),
-            extraMailAddresses
-          )
+    getAccountByUserName(userName).map {
+      account =>
+        val extraMailAddresses = getAccountExtraMailAddresses(userName)
+        params.getOrElse("tab", "repositories") match {
+          // Public Activity
+          case "activity" =>
+            gitbucket.core.account.html.activity(
+              account,
+              if (account.isGroupAccount) Nil else getGroupsByUserName(userName),
+              getActivitiesByUser(userName, true),
+              extraMailAddresses
+            )
 
-        // Members
-        case "members" if (account.isGroupAccount) => {
-          val members = getGroupMembers(account.userName)
-          gitbucket.core.account.html.members(
-            account,
-            members,
-            extraMailAddresses,
-            isGroupManager(context.loginAccount, members)
-          )
-        }
+          // Members
+          case "members" if (account.isGroupAccount) => {
+            if (!context.settings.secretMode || (context.loginAccount.isDefined && context.loginAccount.get.isAdmin)) {
+              val members = getGroupMembers(account.userName)
+              gitbucket.core.account.html.members(
+                account,
+                members,
+                extraMailAddresses,
+                isGroupManager(context.loginAccount, members)
+              )
+            } else NotFound()
+          }
 
-        // Repositories
-        case _ => {
-          val members = getGroupMembers(account.userName)
-          gitbucket.core.account.html.repositories(
-            account,
-            if (account.isGroupAccount) Nil else getGroupsByUserName(userName),
-            getVisibleRepositories(context.loginAccount, Some(userName)),
-            extraMailAddresses,
-            isGroupManager(context.loginAccount, members)
-          )
+          // Repositories
+          case _ => {
+            val members = getGroupMembers(account.userName)
+            gitbucket.core.account.html.repositories(
+              account,
+              if (account.isGroupAccount) Nil else getGroupsByUserName(userName),
+              getVisibleRepositories(context.loginAccount, Some(userName)),
+              extraMailAddresses,
+              isGroupManager(context.loginAccount, members)
+            )
+          }
         }
-      }
     } getOrElse NotFound()
-  }
+  })
 
-  get("/:userName.atom") {
+  get("/:userName.atom")(secretOneselfOnly {
     val userName = params("userName")
-    contentType = "application/atom+xml; type=feed"
+    if (context.loginAccount.get.userName != userName)
+      contentType = "application/atom+xml; type=feed"
     helper.xml.feed(getActivitiesByUser(userName, true))
-  }
+  })
 
-  get("/:userName.keys") {
+  get("/:userName.keys")(secretOneselfOnly {
     val keys = getPublicKeys(params("userName"))
     contentType = "text/plain; charset=utf-8"
     keys.map(_.publicKey).mkString("", "\n", "\n")
-  }
+  })
 
-  get("/:userName/_avatar") {
+  get("/:userName/_avatar")(secretOneselfOnly {
     val userName = params("userName")
     contentType = "image/png"
     getAccountByUserName(userName)
@@ -310,7 +316,7 @@ trait AccountControllerBase extends AccountManagementControllerBase {
         response.setHeader("Cache-Control", "max-age=3600")
         Thread.currentThread.getContextClassLoader.getResourceAsStream("noimage.png")
       }
-  }
+  })
 
   get("/:userName/_edit")(oneselfOnly {
     val userName = params("userName")

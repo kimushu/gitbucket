@@ -134,6 +134,7 @@
     <input type="radio" name="allowAnonymousAccess" value="false"@if(!context.settings.allowAnonymousAccess){ checked}>
     <span class="strong">Deny</span> <span class="normal">- Users must authenticate before viewing any information.</span>
   </label>
+  <span id="error-allowAnonymousAccess" class="error"></span>
 </fieldset>
 <!--====================================================================-->
 <!-- Show mail address -->
@@ -148,6 +149,21 @@
   <label class="radio">
     <input type="radio" name="showMailAddress" value="false"@if(!context.settings.showMailAddress){ checked}>
     <span class="strong">Hide</span> <span class="normal">- Hide mail address in user's profile page.</span>
+  </label>
+</fieldset>
+<!--====================================================================-->
+<!-- Secret mode -->
+<!--====================================================================-->
+<hr>
+<label class="strong">Secret mode</label>
+<fieldset>
+  <label class="radio">
+    <input type="radio" name="secretMode" value="false"@if(!context.settings.secretMode){ checked}>
+    <span class="strong">Disable</span> <span class="normal">- Anyone can view others' profile.</span>
+  </label>
+  <label class="radio">
+    <input type="radio" name="secretMode" value="true"@if(context.settings.secretMode){ checked}>
+    <span class="strong">Enable</span> <span class="normal">- Only administrators can view others' profile.</span>
   </label>
 </fieldset>
 <!--====================================================================-->

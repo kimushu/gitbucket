@@ -54,7 +54,9 @@
       <ul class="nav nav-tabs" style="margin-bottom: 5px;">
         <li@if(active == "repositories"){ class="active"}><a href="@helpers.url(account.userName)?tab=repositories">Repositories</a></li>
         @if(account.isGroupAccount){
-          <li@if(active == "members"){ class="active"}><a href="@helpers.url(account.userName)?tab=members">Members</a></li>
+          @if(!context.settings.secretMode || (context.loginAccount.isDefined && context.loginAccount.get.isAdmin)) {
+            <li@if(active == "members"){ class="active"}><a href="@helpers.url(account.userName)?tab=members">Members</a></li>
+          }
         } else {
           <li@if(active == "activity"){ class="active"}><a href="@helpers.url(account.userName)?tab=activity">Public activity</a></li>
         }

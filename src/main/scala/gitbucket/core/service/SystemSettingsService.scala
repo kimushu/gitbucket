@@ -70,6 +70,7 @@ trait SystemSettingsService {
       }
       props.setProperty(SkinName, settings.skinName.toString)
       props.setProperty(ShowMailAddress, settings.showMailAddress.toString)
+      props.setProperty(SecretMode, settings.secretMode.toString)
       props.setProperty(WebHookBlockPrivateAddress, settings.webHook.blockPrivateAddress.toString)
       props.setProperty(WebHookWhitelist, settings.webHook.whitelist.mkString("\n"))
 
@@ -149,6 +150,7 @@ trait SystemSettingsService {
         },
         getValue(props, SkinName, "skin-blue"),
         getValue(props, ShowMailAddress, false),
+        getValue(props, SecretMode, false),
         WebHook(getValue(props, WebHookBlockPrivateAddress, false), getSeqValue(props, WebHookWhitelist, ""))
       )
     }
@@ -179,6 +181,7 @@ object SystemSettingsService {
     oidc: Option[OIDC],
     skinName: String,
     showMailAddress: Boolean,
+    secretMode: Boolean,
     webHook: WebHook
   ) {
 
@@ -302,6 +305,7 @@ object SystemSettingsService {
   private val OidcJwsAlgorithm = "oidc.jws_algorithm"
   private val SkinName = "skinName"
   private val ShowMailAddress = "showMailAddress"
+  private val SecretMode = "secretMode"
   private val PluginNetworkInstall = "plugin.networkInstall"
   private val PluginProxyHost = "plugin.proxy.host"
   private val PluginProxyPort = "plugin.proxy.port"
