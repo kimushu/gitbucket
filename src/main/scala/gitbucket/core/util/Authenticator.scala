@@ -32,9 +32,9 @@ trait SecretOneselfAuthenticator { self: ControllerBase with AccountService =>
 
   private def authenticate(action: => Any) = {
     context.loginAccount match {
-      case Some(x) if (x.isAdmin)                      => action
-      case Some(x) if (request.paths(0) == x.userName) => action
-      case Some(x) if (getAccountByUserName(request.paths(0)) match {
+      case Some(x) if (x.isAdmin)                        => action
+      case Some(x) if (params("userName") == x.userName) => action
+      case Some(x) if (getAccountByUserName(params("userName")) match {
             case Some(y) if (y.isGroupAccount) =>
               getGroupMembers(y.userName).exists { m =>
                 m.userName == x.userName
@@ -101,6 +101,21 @@ trait AdminAuthenticator { self: ControllerBase =>
     context.loginAccount match {
       case Some(x) if (x.isAdmin) => action
       case _                      => Unauthorized()
+    }
+  }
+}
+
+/**
+ * Allows only administrators when secret mode.
+ */
+trait SecretAuthenticator { self: ControllerBase =>
+  protected def secretOnly(action: => Any) = { authenticate(action) }
+  protected def secretOnly[T](action: T => Any) = (form: T) => { authenticate(action(form)) }
+
+  private def authenticate(action: => Any) = {
+    context.loginAccount match {
+      case Some(x) if (x.isAdmin || !context.settings.secretMode) => action
+      case _                                                      => Unauthorized()
     }
   }
 }

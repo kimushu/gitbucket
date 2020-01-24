@@ -45,7 +45,9 @@ class ApiController
     with WikiService
     with ActivityService
     with PrioritiesService
+    with SecretOneselfAuthenticator
     with AdminAuthenticator
+    with SecretAuthenticator
     with OwnerAuthenticator
     with UsersAuthenticator
     with GroupManagerAuthenticator

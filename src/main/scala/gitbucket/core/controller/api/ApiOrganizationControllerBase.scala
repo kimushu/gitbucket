@@ -3,10 +3,15 @@ import gitbucket.core.api.{ApiGroup, CreateAGroup, ApiRepository, ApiUser, JsonF
 import gitbucket.core.controller.ControllerBase
 import gitbucket.core.service.{AccountService, RepositoryService}
 import gitbucket.core.util.Implicits._
-import gitbucket.core.util.{AdminAuthenticator, UsersAuthenticator}
+import gitbucket.core.util.{SecretOneselfAuthenticator, AdminAuthenticator, SecretAuthenticator, UsersAuthenticator}
 
 trait ApiOrganizationControllerBase extends ControllerBase {
-  self: RepositoryService with AccountService with AdminAuthenticator with UsersAuthenticator =>
+  self: RepositoryService
+    with AccountService
+    with SecretOneselfAuthenticator
+    with AdminAuthenticator
+    with SecretAuthenticator
+    with UsersAuthenticator =>
 
   /*
    * i. List your organizations
@@ -20,27 +25,27 @@ trait ApiOrganizationControllerBase extends ControllerBase {
    * ii. List all organizations
    * https://developer.github.com/v3/orgs/#list-all-organizations
    */
-  get("/api/v3/organizations") {
+  get("/api/v3/organizations")(secretOnly {
     JsonFormat(getAllUsers(false, true).filter(a => a.isGroupAccount).map(ApiGroup(_)))
-  }
+  })
 
   /*
    * iii. List user organizations
    * https://developer.github.com/v3/orgs/#list-user-organizations
    */
-  get("/api/v3/users/:userName/orgs") {
+  get("/api/v3/users/:userName/orgs")(secretOneselfOnly {
     JsonFormat(getGroupsByUserName(params("userName")).flatMap(getAccountByUserName(_)).map(ApiGroup(_)))
-  }
+  })
 
   /**
    * iv. Get an organization
    * https://developer.github.com/v3/orgs/#get-an-organization
    */
-  get("/api/v3/orgs/:groupName") {
+  get("/api/v3/orgs/:groupName")(secretOnly {
     getAccountByUserName(params("groupName")).filter(account => account.isGroupAccount).map { account =>
       JsonFormat(ApiGroup(account))
     } getOrElse NotFound()
-  }
+  })
 
   /*
    * v. Edit an organization

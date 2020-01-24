@@ -2,24 +2,29 @@ package gitbucket.core.controller.api
 import gitbucket.core.api.{ApiUser, CreateAUser, JsonFormat, UpdateAUser}
 import gitbucket.core.controller.ControllerBase
 import gitbucket.core.service.{AccountService, RepositoryService}
-import gitbucket.core.util.{AdminAuthenticator, UsersAuthenticator}
+import gitbucket.core.util.{SecretOneselfAuthenticator, AdminAuthenticator, SecretAuthenticator, UsersAuthenticator}
 import gitbucket.core.util.Implicits._
 import gitbucket.core.util.StringUtil._
 import org.scalatra.NoContent
 
 trait ApiUserControllerBase extends ControllerBase {
-  self: RepositoryService with AccountService with AdminAuthenticator with UsersAuthenticator =>
+  self: RepositoryService
+    with AccountService
+    with SecretOneselfAuthenticator
+    with AdminAuthenticator
+    with SecretAuthenticator
+    with UsersAuthenticator =>
 
   /**
    * i. Get a single user
    * https://developer.github.com/v3/users/#get-a-single-user
    * This API also returns group information (as GitHub).
    */
-  get("/api/v3/users/:userName") {
+  get("/api/v3/users/:userName")(secretOneselfOnly {
     getAccountByUserName(params("userName")).map { account =>
       JsonFormat(ApiUser(account))
     } getOrElse NotFound()
-  }
+  })
 
   /**
    * ii. Get the authenticated user
@@ -57,9 +62,9 @@ trait ApiUserControllerBase extends ControllerBase {
    * v. Get all users
    * https://developer.github.com/v3/users/#get-all-users
    */
-  get("/api/v3/users") {
+  get("/api/v3/users")(secretOnly {
     JsonFormat(getAllUsers(false, false).map(a => ApiUser(a)))
-  }
+  })
 
   /*
    * ghe: i. Create a new user
